@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>W/I DAILY BOARD</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<style>
+ :root {
+   --primary: #1a1265;
+   --accent: #4c3db2;
+   --bg: #f4f6f9;
+   --white: #ffffff;
+   --error: #d32f2f;
+   --success: #2e7d32;
+   --chip-bg: #f0f2f5;
+   --chip-active: #e8eaf6;
+   --chip-active-text: #1a1265;
+ }
+
+ /* --- GLOBAL RESET & APP SHELL --- */
+ * {
+     -webkit-tap-highlight-color: transparent;
+     box-sizing: border-box;
+     touch-action: manipulation; /* Improves touch response on some devices */
+ }
+ 
+ button:focus { outline: none; }
+
+ body {
+   font-family: 'Montserrat', sans-serif;
+   background: var(--bg);
+   margin: 0; padding: 0;
+   display: flex; justify-content: center;
+   /* Mobile Viewport Fixes */
+   height: 100vh; 
+   height: 100dvh; /* Dynamic height for mobile browsers */
+   overflow: hidden;
+   color: var(--primary);
+   -webkit-font-smoothing: antialiased; /* iOS/Mac text rendering */
+   -moz-osx-font-smoothing: grayscale;
+   overscroll-behavior: none; /* Prevent bounce effects */
+ }
+
+ .app-container {
+   width: 100%; max-width: 500px; background: var(--white);
+   height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.05);
+   display: flex; flex-direction: column;
+   position: relative; overflow: hidden;
+ }
+
+ /* --- Utility --- */
+ .hidden { display: none !important; }
+ .text-center { text-align: center; }
+
+ /* --- Header --- */
+ header {
+   background: var(--primary); color: var(--white);
+   padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+   flex-shrink: 0; z-index: 20; box-shadow: 0 4px 10px rgba(26, 18, 101, 0.2);
+   padding-top: max(15px, env(safe-area-inset-top)); /* Notch support */
+ }
+ h1 { margin: 0; font-size: 16px; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+ .header-btn {
+    background: transparent; border: none; color: white; cursor: pointer;
+    padding: 8px; border-radius: 50%; transition: background 0.2s;
+    display: flex; align-items: center; justify-content: center;
+ }
+ .header-btn:hover { background: rgba(255,255,255,0.1); }
+ .material-icons { font-size: 24px; }
+
+ /* --- Views --- */
+ .view-section {
+     padding: 20px; display: flex; flex-direction: column; flex: 1;
+     position: relative; overflow-y: auto; height: 100%;
+     -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+ }
+ #view-app { padding: 0; overflow: hidden; }
+
+ /* --- Auth Screen --- */
+ .auth-container { justify-content: center; padding: 30px; }
+ .auth-title { font-size: 24px; font-weight: 900; margin-bottom: 10px; color: var(--primary); }
+ .auth-subtitle { font-size: 14px; color: #888; margin-bottom: 30px; }
+ .toggle-link { margin-top: 20px; font-size: 12px; color: var(--accent); cursor: pointer; text-decoration: underline; text-align: center; user-select: none; }
+
+ /* --- Profile Screen --- */
+ .profile-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+ .profile-title { font-size: 18px; font-weight: 800; }
+ .close-profile-btn { background: transparent; border: none; cursor: pointer; color: #888; padding: 5px; border-radius: 50%; display: flex; }
+ .close-profile-btn:hover { background: #f0f0f0; color: var(--primary); }
+
+ .profile-info { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; color: #666; }
+ .profile-info strong { color: var(--primary); display: block; margin-bottom: 4px; font-size: 11px; text-transform: uppercase; }
+ .changes-counter { background: #e8eaf6; color: var(--primary); padding: 8px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; display: inline-block; margin-bottom: 15px; }
+ .changes-counter.zero { background: #ffebee; color: #c62828; }
+
+ /* History Section */
+ .history-title { font-size: 16px; font-weight: 800; margin-top: 30px; margin-bottom: 15px; border-top: 1px solid #eee; padding-top: 20px; }
+ .history-list { display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+ .history-item {
+     background: #fff; border: 1px solid #eee; border-radius: 8px; padding: 12px;
+     display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+     box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+ }
+ .history-content { flex: 1; }
+ .history-meta { font-size: 10px; color: #999; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
+ .history-msg { font-size: 13px; color: #333; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+ .edit-icon-btn {
+     background: #e8eaf6; color: var(--primary); border: none; border-radius: 6px;
+     width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+     cursor: pointer; flex-shrink: 0;
+ }
+ .edit-icon-btn:hover { background: #d1d9ff; }
+
+ /* --- Inputs --- */
+ .input-group { margin-bottom: 15px; }
+ label { display: block; font-size: 11px; font-weight: 700; margin-bottom: 6px; color: #888; text-transform: uppercase; }
+ input, textarea { 
+     width: 100%; box-sizing: border-box; padding: 14px; border: 2px solid #eee; border-radius: 8px; 
+     font-family: 'Montserrat', sans-serif; font-size: 16px; /* 16px prevents iOS zoom */ 
+     font-weight: 500; resize: none; 
+ }
+ input:focus, textarea:focus { outline: none; border-color: var(--primary); }
+ input#auth-username { letter-spacing: normal; }
+
+ /* --- Buttons --- */
+ .primary-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14px; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px rgba(26, 18, 101, 0.2); }
+ .primary-btn:active { transform: scale(0.98); }
+ .primary-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+ .secondary-btn { background: #eee; color: #333; margin-top: 10px; box-shadow: none; }
+
+ /* --- Main Menu Overlay --- */
+ .menu-overlay {
+     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+     background: rgba(0,0,0,0.5); z-index: 30;
+     visibility: hidden; opacity: 0;
+     transition: visibility 0s linear 0.3s, opacity 0.3s ease;
+ }
+ .menu-overlay.active { visibility: visible; opacity: 1; transition: visibility 0s linear 0s, opacity 0.3s ease; }
+ .menu-drawer {
+     position: absolute; top: 0; left: 0; width: 250px; height: 100%;
+     background: white; box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+     transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+     padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
+     padding-top: max(20px, env(safe-area-inset-top)); /* Notch support */
+ }
+ .menu-overlay.active .menu-drawer { transform: translateX(0); }
+ .menu-item { display: block; padding: 15px; font-weight: 700; font-size: 14px; color: #333; border-radius: 8px; cursor: pointer; margin-bottom: 5px; }
+ .menu-item.active { background: var(--chip-active); color: var(--primary); }
+ .menu-item:hover { background: #f5f5f5; }
+
+ /* --- Chat Area --- */
+ .tab-container { display: flex; background: #f0f2f5; border-radius: 0; padding: 8px 15px; flex-shrink: 0; border-bottom: 1px solid #eee; }
+ .tab-btn { flex: 1; border: none; background: transparent; padding: 8px; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; color: #888; cursor: pointer; transition: all 0.2s; }
+ .tab-btn.active { background: var(--white); color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+ .chat-container { flex: 1; overflow-y: auto; padding: 15px 20px; padding-bottom: 90px; -webkit-overflow-scrolling: touch; }
+ .chat-box { display: flex; flex-direction: column; gap: 16px; }
+
+ /* Message Bubble */
+ .bubble {
+   background: var(--white); padding: 16px; border-radius: 12px; border-left: 5px solid var(--primary);
+   box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: slideUp 0.3s ease-out forwards;
+   opacity: 0; transform: translateY(10px); position: relative;
+ }
+ .bubble-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+ .alias { font-weight: 800; font-size: 13px; color: var(--primary); }
+ .time { font-size: 10px; color: #999; font-weight: 600; }
+ .msg { font-weight: 500; font-size: 14px; line-height: 1.5; color: #333; white-space: pre-wrap; word-wrap: break-word; text-align: justify; }
+
+ /* Reactions */
+ .reaction-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; align-items: center; }
+ .reaction-chip {
+     background: var(--chip-bg); border: 1px solid transparent; border-radius: 12px; padding: 4px 8px;
+     font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 4px; user-select: none; color: #555;
+ }
+ .reaction-chip.active { background: var(--chip-active); border-color: var(--primary); color: var(--chip-active-text); font-weight: 700; }
+ .reaction-chip:active { transform: scale(0.95); }
+ .add-reaction-btn {
+     background: transparent; border: 1px dashed #ccc; border-radius: 50%; width: 24px; height: 24px;
+     display: flex; align-items: center; justify-content: center; cursor: pointer; color: #888; transition: all 0.2s;
+ }
+ .add-reaction-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+ /* --- FAB & Modals --- */
+ .fab-btn {
+     position: absolute; 
+     bottom: 25px; 
+     right: 25px; 
+     left: auto; 
+     width: 60px; height: 60px; border-radius: 50%;
+     background: var(--primary); color: white; border: none; box-shadow: 0 4px 15px rgba(26,18,101,0.4);
+     display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 25; transition: transform 0.2s;
+     padding-bottom: env(safe-area-inset-bottom); /* Safe area for notched phones */
+ }
+ .fab-btn:hover { transform: scale(1.05); }
+ .fab-btn:active { transform: scale(0.95); }
+
+ .compose-overlay {
+     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+     background: rgba(0,0,0,0.6); z-index: 35; display: none; justify-content: center; align-items: flex-end;
+ }
+ .compose-overlay.active { display: flex; }
+ .compose-sheet {
+     background: white; width: 100%; max-width: 500px;
+     border-top-left-radius: 20px; border-top-right-radius: 20px; padding: 20px; box-sizing: border-box;
+     animation: slideUpSheet 0.3s ease-out;
+     padding-bottom: max(20px, env(safe-area-inset-bottom)); /* Safe area */
+ }
+ .compose-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+ .compose-title { font-weight: 800; font-size: 14px; color: var(--primary); }
+ .compose-close { background: none; border: none; cursor: pointer; color: #888; }
+ .posting-as-info { font-size: 11px; color: #666; margin-bottom: 10px; background: #f0f2f5; padding: 8px; border-radius: 4px; }
+ .posting-as-info span { font-weight: 700; color: var(--primary); }
+
+ /* Emoji Popover */
+ .emoji-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: transparent; z-index: 1000; display: block; }
+ .emoji-modal {
+     position: fixed; background: white; padding: 10px; border-radius: 12px; width: 180px;
+     box-shadow: 0 5px 20px rgba(0,0,0,0.15); border: 1px solid #eee; animation: popIn 0.2s;
+ }
+ .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+ .emoji-btn { font-size: 20px; background: #fff; border: none; border-radius: 4px; padding: 5px 0; cursor: pointer; transition: transform 0.1s; }
+ .emoji-btn:hover { background: #f0f0f0; }
+
+ .loading-spinner { text-align: center; padding: 20px; font-size: 12px; color: #999; font-weight: 600; }
+ .error-msg, .success-msg { font-size: 12px; font-weight: 700; margin-bottom: 10px; text-align: center; display: none; }
+ .error-msg { color: var(--error); }
+ .success-msg { color: var(--success); }
+
+ @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+ @keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+ @keyframes popIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <!-- MENU DRAWER -->
+  <div id="menu-overlay" class="menu-overlay">
+      <div class="menu-drawer">
+          <div style="font-size: 18px; font-weight: 900; margin-bottom: 20px; color: var(--primary);">MENU</div>
+          <div id="menu-list"></div>
+          <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999;">DBS/WI Project 2.0</div>
+      </div>
+  </div>
+
+  <!-- HEADER -->
+  <header id="app-header" class="hidden">
+    <button id="nav-menu-btn" class="header-btn"><span class="material-icons">menu</span></button>
+    <h1 id="header-title">W/I DAILY BOARD</h1>
+    <button id="nav-profile" class="header-btn"><span class="material-icons">person</span></button>
+  </header>
+
+  <!-- AUTH VIEW -->
+  <div id="view-auth" class="view-section auth-container">
+    <div class="auth-title" id="auth-title-text">Welcome, Petals!</div>
+    <div class="auth-subtitle">Please use the board wisely!</div>
+    <div id="auth-error" class="error-msg"></div>
+    <div class="input-group"><label>Username</label><input type="text" id="auth-username" placeholder="username" maxlength="20" autocapitalize="none"></div>
+    <div class="input-group"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••"></div>
+    <button id="auth-action-btn" class="primary-btn">LOGIN</button>
+    <div class="toggle-link" id="toggle-auth-mode">New here? Create an account</div>
+  </div>
+
+  <!-- APP VIEW (Chat) -->
+  <div id="view-app" class="view-section hidden">
+    <div class="tab-container">
+        <button id="tab-newest" class="tab-btn active">Newest</button>
+        <button id="tab-trending" class="tab-btn">Trending</button>
+    </div>
+    <div class="chat-container">
+      <div id="chat-status" class="loading-spinner">Connecting...</div>
+      <div id="chat" class="chat-box"></div>
+    </div>
+    <button id="fab-compose" class="fab-btn"><span class="material-icons">add</span></button>
+  </div>
+
+  <!-- COMPOSE MODAL (Used for New & Edit) -->
+  <div id="compose-modal" class="compose-overlay">
+      <div class="compose-sheet">
+          <div class="compose-header">
+              <span class="compose-title" id="compose-title">NEW MESSAGE</span>
+              <button class="compose-close" id="close-compose"><span class="material-icons">close</span></button>
+          </div>
+          <div class="posting-as-info" id="compose-info-box">Posting as: <span id="compose-alias-display">...</span></div>
+          <div class="input-group">
+            <textarea id="input-msg" rows="4" placeholder="I wish you knew that…" maxlength="1000"></textarea>
+          </div>
+          <button id="send-btn" class="primary-btn">POST MESSAGE</button>
+      </div>
+  </div>
+
+  <!-- PROFILE VIEW -->
+  <div id="view-profile" class="view-section hidden">
+    <div class="profile-header-row">
+        <span class="profile-title">My Profile</span>
+        <button id="close-profile" class="close-profile-btn"><span class="material-icons">close</span></button>
+    </div>
+    <div id="profile-msg" class="success-msg">Profile updated!</div>
+    <div class="profile-info">
+      <strong>Username (Private)</strong>
+      <span id="profile-username-display">@loading</span>
+    </div>
+    <div class="changes-counter" id="changes-left-display">Change left: 2</div>
+    <div class="input-group">
+      <label>Display Name (Alias)</label>
+      <input type="text" id="profile-alias-input" placeholder="e.g. mamatracing" maxlength="25">
+    </div>
+    <button id="save-profile-btn" class="primary-btn">SAVE CHANGES</button>
+    <button id="logout-btn" class="primary-btn secondary-btn" style="background:#ffebee; color: #c62828;">LOGOUT</button>
+
+    <!-- History Section -->
+    <div class="history-title">My Messages</div>
+    <div id="profile-history-list" class="history-list">
+        <div class="loading-spinner">Loading history...</div>
+    </div>
+  </div>
+
+  <!-- EMOJI POPOVER -->
+  <div id="emoji-modal-container" class="emoji-modal-overlay hidden" onclick="closeEmojiModal()">
+    <div class="emoji-modal" id="emoji-modal-box" onclick="event.stopPropagation()">
+        <div class="emoji-grid" id="emoji-grid-buttons"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Firebase Logic -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, addDoc, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, onSnapshot, serverTimestamp, where, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // 1. Configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAEH9fMrOXcFKmSsA2MCvb-20RjnYHRQvY",
+    authDomain: "iris-abfbc.firebaseapp.com",
+    projectId: "iris-abfbc",
+    storageBucket: "iris-abfbc.firebasestorage.app",
+    messagingSenderId: "351099461528",
+    appId: "1:351099461528:web:882ddc22bf6443c4a855ed",
+    measurementId: "G-S16XVCBMND"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const EMAIL_DOMAIN = "@iris.board";
+  const ALLOWED_EMOJIS = ["🥺", "😔", "😭", "🤣", "👍🏻", "👎🏻", "❤️", "😡", "🔥"];
+
+  // DATABASE MAPPING
+  const DAYS_CONFIG = [
+      { id: 1, name: "DAY 1", collection: "messages" },
+      { id: 2, name: "DAY 2", collection: "messages_day2" },
+      { id: 3, name: "DAY 3", collection: "messages_day3" },
+      { id: 4, name: "DAY 4", collection: "messages_day4" },
+      { id: 5, name: "DAY 5", collection: "messages_day5" }
+  ];
+
+  // 2. UI References
+  const views = {
+      header: document.getElementById('app-header'),
+      auth: document.getElementById('view-auth'),
+      app: document.getElementById('view-app'),
+      profile: document.getElementById('view-profile'),
+      menu: document.getElementById('menu-overlay'),
+      compose: document.getElementById('compose-modal')
+  };
+
+  const ui = {
+      // Auth
+      authUsn: document.getElementById('auth-username'),
+      authPass: document.getElementById('auth-password'),
+      authBtn: document.getElementById('auth-action-btn'),
+      authToggle: document.getElementById('toggle-auth-mode'),
+      authError: document.getElementById('auth-error'),
+      authTitle: document.getElementById('auth-title-text'),
+      
+      // Header & Menu
+      headerTitle: document.getElementById('header-title'),
+      btnMenu: document.getElementById('nav-menu-btn'),
+      btnProfile: document.getElementById('nav-profile'),
+      menuList: document.getElementById('menu-list'),
+      
+      // Profile
+      btnCloseProfile: document.getElementById('close-profile'),
+      btnLogout: document.getElementById('logout-btn'),
+      profUsn: document.getElementById('profile-username-display'),
+      profAlias: document.getElementById('profile-alias-input'),
+      profSave: document.getElementById('save-profile-btn'),
+      profMsg: document.getElementById('profile-msg'),
+      profLeft: document.getElementById('changes-left-display'),
+      historyList: document.getElementById('profile-history-list'),
+
+      // App
+      chatList: document.getElementById('chat'),
+      chatStatus: document.getElementById('chat-status'),
+      tabNewest: document.getElementById('tab-newest'),
+      tabTrending: document.getElementById('tab-trending'),
+      
+      // Compose
+      fab: document.getElementById('fab-compose'),
+      closeCompose: document.getElementById('close-compose'),
+      composeTitle: document.getElementById('compose-title'),
+      composeInfo: document.getElementById('compose-info-box'),
+      composeAlias: document.getElementById('compose-alias-display'),
+      msgInput: document.getElementById('input-msg'),
+      sendBtn: document.getElementById('send-btn'),
+      
+      // Emoji
+      emojiModal: document.getElementById('emoji-modal-container'),
+      emojiBox: document.getElementById('emoji-modal-box'),
+      emojiGrid: document.getElementById('emoji-grid-buttons')
+  };
+
+  // State
+  let currentUserData = { alias: "", changesLeft: 2 };
+  let isLoginMode = true;
+  let chatUnsub = null;
+  let currentReactingMsgId = null;
+  let messagesCache = []; 
+  let currentSortMode = 'newest'; 
+  let currentActiveDayId = 1; 
+  let isEditingMode = false;
+  let editingMessageId = null;
+  let editingCollection = null;
+
+  // 3. Init & Helpers
+  function initMenu() {
+      ui.menuList.innerHTML = "";
+      DAYS_CONFIG.forEach(day => {
+          const div = document.createElement('div');
+          div.className = `menu-item ${day.id === currentActiveDayId ? 'active' : ''}`;
+          div.textContent = day.name;
+          div.onclick = () => switchDay(day.id);
+          ui.menuList.appendChild(div);
+      });
+  }
+
+  function switchDay(dayId) {
+      if (currentActiveDayId === dayId) {
+          views.menu.classList.remove('active');
+          // Ensure we close profile if open
+          switchView('app');
+          return;
+      }
+      currentActiveDayId = dayId;
+      initMenu(); 
+      ui.headerTitle.textContent = `W/I DAILY BOARD`; // FIXED: Static Title
+      views.menu.classList.remove('active');
+      startChatListener();
+      switchView('app'); // Auto-close profile
+  }
+
+  function getCurrentCollection() { return DAYS_CONFIG.find(d => d.id === currentActiveDayId).collection; }
+
+  ALLOWED_EMOJIS.forEach(emoji => {
+      const btn = document.createElement('button'); btn.className = 'emoji-btn'; btn.textContent = emoji;
+      btn.onclick = () => handleEmojiPick(emoji); ui.emojiGrid.appendChild(btn);
+  });
+  
+  window.closeEmojiModal = () => ui.emojiModal.classList.add('hidden');
+  
+  ui.btnMenu.addEventListener('click', () => views.menu.classList.add('active'));
+  views.menu.addEventListener('click', (e) => { if(e.target === views.menu) views.menu.classList.remove('active'); });
+
+  // Compose / Edit Logic
+  ui.fab.addEventListener('click', () => openComposeModal()); // New Message
+  
+  function openComposeModal(editData = null) {
+      views.compose.classList.add('active');
+      if (editData) {
+          // EDIT MODE
+          isEditingMode = true;
+          editingMessageId = editData.id;
+          editingCollection = editData.collection;
+          ui.composeTitle.textContent = "EDIT MESSAGE";
+          ui.composeInfo.style.display = 'none';
+          ui.sendBtn.textContent = "UPDATE MESSAGE";
+          ui.msgInput.value = editData.text;
+      } else {
+          // NEW MODE
+          isEditingMode = false;
+          editingMessageId = null;
+          ui.composeTitle.textContent = "NEW MESSAGE";
+          ui.composeInfo.style.display = 'block';
+          ui.composeAlias.textContent = currentUserData.alias || "Anonymous";
+          ui.sendBtn.textContent = "POST MESSAGE";
+          ui.msgInput.value = "";
+      }
+      setTimeout(() => ui.msgInput.focus(), 100);
+  }
+
+  ui.closeCompose.addEventListener('click', () => views.compose.classList.remove('active'));
+  views.compose.addEventListener('click', (e) => { if(e.target === views.compose) views.compose.classList.remove('active'); });
+
+  ui.authUsn.addEventListener('input', (e) => e.target.value = e.target.value.replace(/[^a-zA-Z]/g, ''));
+  
+  ui.btnProfile.addEventListener('click', () => { 
+      ui.profMsg.style.display = 'none'; 
+      switchView('profile'); 
+      loadUserHistory(); // Load history when profile opens
+  });
+  ui.btnCloseProfile.addEventListener('click', () => { if(currentUserData.alias) switchView('app'); });
+
+  ui.tabNewest.addEventListener('click', () => { currentSortMode = 'newest'; ui.tabNewest.classList.add('active'); ui.tabTrending.classList.remove('active'); renderMessages(); });
+  ui.tabTrending.addEventListener('click', () => { currentSortMode = 'trending'; ui.tabTrending.classList.add('active'); ui.tabNewest.classList.remove('active'); renderMessages(); });
+
+  function switchView(viewName) {
+      views.auth.classList.add('hidden'); views.app.classList.add('hidden'); views.profile.classList.add('hidden');
+      if (viewName === 'auth') { views.header.classList.add('hidden'); views.auth.classList.remove('hidden'); }
+      else if (viewName === 'profile' && !currentUserData.alias) { views.header.classList.add('hidden'); views.profile.classList.remove('hidden'); ui.btnCloseProfile.style.display = 'none'; }
+      else { views.header.classList.remove('hidden'); views[viewName].classList.remove('hidden'); if(viewName === 'profile') ui.btnCloseProfile.style.display = 'flex'; }
+  }
+
+  // 4. Auth & Profile Logic
+  onAuthStateChanged(auth, async (user) => {
+      if (user) {
+          const cleanUsername = user.email.replace(EMAIL_DOMAIN, '');
+          ui.profUsn.textContent = "@" + cleanUsername;
+          await loadUserProfile(user.uid);
+          if (!currentUserData.alias) { ui.profMsg.textContent = "Welcome! Please set your Display Name."; ui.profMsg.style.display = 'block'; switchView('profile'); }
+          else { initMenu(); startChatListener(); switchView('app'); }
+      } else {
+          currentUserData = { alias: "", changesLeft: 2 };
+          if (chatUnsub) chatUnsub();
+          switchView('auth');
+      }
+  });
+
+  async function loadUserProfile(uid) {
+      try {
+          const docSnap = await getDoc(doc(db, "users", uid));
+          if (docSnap.exists()) { currentUserData = docSnap.data(); if (currentUserData.changesLeft === undefined) currentUserData.changesLeft = 2; }
+          else { currentUserData = { alias: "", changesLeft: 2 }; }
+          updateProfileUI();
+      } catch (e) { console.error(e); }
+  }
+
+  function updateProfileUI() {
+      ui.profAlias.value = currentUserData.alias || "";
+      ui.profLeft.textContent = `Change left: ${currentUserData.changesLeft}`;
+      if (currentUserData.changesLeft <= 0 && currentUserData.alias) { ui.profLeft.classList.add('zero'); ui.profAlias.disabled = true; ui.profSave.disabled = true; ui.profSave.textContent = "NO CHANGES LEFT"; }
+      else { ui.profLeft.classList.remove('zero'); ui.profAlias.disabled = false; ui.profSave.disabled = false; ui.profSave.textContent = "SAVE CHANGES"; }
+  }
+
+  // HISTORY LOGIC
+  async function loadUserHistory() {
+      const user = auth.currentUser;
+      if (!user) return;
+      ui.historyList.innerHTML = '<div class="loading-spinner">Loading history...</div>';
+      
+      let allMsgs = [];
+      try {
+          // Fetch from all 5 collections
+          for (const day of DAYS_CONFIG) {
+              const q = query(collection(db, day.collection), where("uid", "==", user.uid));
+              const snap = await getDocs(q);
+              snap.forEach(d => {
+                  allMsgs.push({
+                      id: d.id,
+                      coll: day.collection,
+                      dayName: day.name,
+                      ...d.data()
+                  });
+              });
+          }
+          // Sort by timestamp desc (JS sort)
+          allMsgs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+          renderHistoryList(allMsgs);
+      } catch (e) {
+          console.error(e);
+          ui.historyList.innerHTML = '<div class="text-center" style="font-size:12px;color:red;">Failed to load history.</div>';
+      }
+  }
+
+  function renderHistoryList(msgs) {
+      ui.historyList.innerHTML = "";
+      if (msgs.length === 0) {
+          ui.historyList.innerHTML = '<div class="text-center" style="font-size:12px;color:#999;">No messages yet.</div>';
+          return;
+      }
+      msgs.forEach(msg => {
+          const div = document.createElement('div');
+          div.className = 'history-item';
+          const timeStr = formatTime(msg.timestamp);
+          div.innerHTML = `
+            <div class="history-content">
+                <div class="history-meta">${msg.dayName} • ${timeStr}</div>
+                <div class="history-msg">${escapeHtml(msg.message)}</div>
+            </div>
+            <button class="edit-icon-btn"><span class="material-icons" style="font-size:16px;">edit</span></button>
+          `;
+          // Bind Edit
+          div.querySelector('.edit-icon-btn').onclick = () => {
+              openComposeModal({ id: msg.id, collection: msg.coll, text: msg.message });
+          };
+          ui.historyList.appendChild(div);
+      });
+  }
+
+  ui.profSave.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      const newAlias = ui.profAlias.value.trim();
+      const currentAlias = currentUserData.alias;
+      const currentLeft = currentUserData.changesLeft;
+      if (!newAlias) { alert("Alias cannot be empty"); return; }
+      if (currentAlias && currentLeft <= 0) { alert("You have 0 changes left."); return; }
+
+      ui.profSave.textContent = "SAVING..."; ui.profSave.disabled = true;
+      try {
+          const batch = writeBatch(db);
+          const userRef = doc(db, "users", user.uid);
+          let newLeft = currentLeft;
+          if (currentAlias && currentAlias !== newAlias) newLeft = currentLeft - 1;
+
+          batch.set(userRef, { alias: newAlias, changesLeft: newLeft, updatedAt: serverTimestamp() }, { merge: true });
+          for (const day of DAYS_CONFIG) {
+              const q = query(collection(db, day.collection), where("uid", "==", user.uid));
+              const querySnapshot = await getDocs(q);
+              querySnapshot.forEach((doc) => batch.update(doc.ref, { alias: newAlias }));
+          }
+          await batch.commit();
+          currentUserData.alias = newAlias; currentUserData.changesLeft = newLeft;
+          updateProfileUI();
+          ui.profMsg.textContent = "Profile updated!"; ui.profMsg.style.display = 'block';
+          if (!currentAlias) { setTimeout(() => { initMenu(); startChatListener(); switchView('app'); }, 1000); }
+          else { setTimeout(() => ui.profMsg.style.display = 'none', 3000); }
+      } catch (e) { alert("Failed to save profile."); } 
+      finally { ui.profSave.textContent = "SAVE CHANGES"; ui.profSave.disabled = false; }
+  });
+
+  // 6. Chat & Time Logic
+  function startChatListener() {
+      if (chatUnsub) chatUnsub();
+      ui.chatList.innerHTML = ""; ui.chatStatus.style.display = 'block';
+      const collName = getCurrentCollection();
+      const q = query(collection(db, collName), orderBy("timestamp", "desc"));
+      chatUnsub = onSnapshot(q, (snapshot) => {
+          ui.chatStatus.style.display = 'none';
+          messagesCache = [];
+          snapshot.forEach((doc) => { const data = doc.data(); if (data.message) messagesCache.push({ id: doc.id, ...data }); });
+          renderMessages();
+      });
+  }
+
+  function formatTime(timestamp) {
+      if (!timestamp) return 'Just now';
+      const now = new Date(); const date = timestamp.toDate(); const diff = (now - date) / 1000; 
+      if (diff < 60) return Math.floor(diff) + 's ago';
+      if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+      if (diff < 21600) { const h = Math.floor(diff / 3600); const m = Math.floor((diff % 3600) / 60); return `${h}h ${m}m ago`; }
+      if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+      return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  function renderMessages() {
+      ui.chatList.innerHTML = "";
+      if (messagesCache.length === 0) { ui.chatList.innerHTML = `<div class="loading-spinner">No messages for ${DAYS_CONFIG.find(d=>d.id===currentActiveDayId).name}.</div>`; return; }
+      let displayList = [...messagesCache];
+      if (currentSortMode === 'trending') {
+          displayList.sort((a, b) => {
+              const countA = countTotalReactions(a.reactions); const countB = countTotalReactions(b.reactions);
+              if (countB !== countA) return countB - countA; return b.timestamp?.toMillis() - a.timestamp?.toMillis();
+          });
+      } else { displayList.sort((a, b) => b.timestamp?.toMillis() - a.timestamp?.toMillis()); }
+      let html = ""; const currentUid = auth.currentUser?.uid;
+      displayList.forEach((msg, index) => html += renderMessageBubble(msg.id, msg, currentUid, index));
+      ui.chatList.innerHTML = html;
+      attachReactionListeners();
+  }
+
+  function countTotalReactions(reactions) {
+      if (!reactions) return 0;
+      return Object.values(reactions).reduce((acc, arr) => acc + (arr ? arr.length : 0), 0);
+  }
+
+  function renderMessageBubble(id, data, currentUid, index) {
+      const timeStr = formatTime(data.timestamp);
+      let reactionsHtml = ""; const reactions = data.reactions || {}; 
+      for (const [emoji, uids] of Object.entries(reactions)) {
+          if (!uids || uids.length === 0) continue;
+          const isMe = uids.includes(currentUid);
+          reactionsHtml += `<div class="reaction-chip ${isMe?'active':''}" data-msg-id="${id}" data-emoji="${emoji}"><span>${emoji}</span><span>${uids.length}</span></div>`;
+      }
+      const delay = index < 10 ? index * 0.05 : 0;
+      return `<div class="bubble" style="animation-delay: ${delay}s"><div class="bubble-header"><span class="alias">${escapeHtml(data.alias || "Anonymous")}</span><span class="time">${timeStr}</span></div><div class="msg">${escapeHtml(data.message)}</div><div class="reaction-bar">${reactionsHtml}<button class="add-reaction-btn" data-msg-id="${id}"><span class="material-icons" style="font-size: 16px;">add_reaction</span></button></div></div>`;
+  }
+
+  function attachReactionListeners() {
+      document.querySelectorAll('.reaction-chip').forEach(chip => { chip.onclick = () => toggleReaction(chip.getAttribute('data-msg-id'), chip.getAttribute('data-emoji')); });
+      document.querySelectorAll('.add-reaction-btn').forEach(btn => { btn.onclick = (e) => openEmojiPopover(e, btn.getAttribute('data-msg-id')); });
+  }
+
+  function openEmojiPopover(event, msgId) {
+      currentReactingMsgId = msgId; const btn = event.currentTarget; const rect = btn.getBoundingClientRect();
+      const modalWidth = 200; const modalHeight = 100; let top = rect.top - modalHeight + 20; let left = rect.left - (modalWidth / 2) + (rect.width / 2);
+      if (left < 10) left = 10; if (left + modalWidth > window.innerWidth) left = window.innerWidth - modalWidth - 10; if (top < 10) top = rect.bottom + 10; 
+      ui.emojiBox.style.top = `${top}px`; ui.emojiBox.style.left = `${left}px`; ui.emojiModal.classList.remove('hidden');
+  }
+
+  window.handleEmojiPick = (emoji) => { if (currentReactingMsgId) { toggleReaction(currentReactingMsgId, emoji); ui.emojiModal.classList.add('hidden'); currentReactingMsgId = null; } };
+
+  async function toggleReaction(msgId, emoji) {
+      const user = auth.currentUser; if (!user) return;
+      const collName = getCurrentCollection(); const msgRef = doc(db, collName, msgId);
+      try {
+          await runTransaction(db, async (transaction) => {
+              const msgDoc = await transaction.get(msgRef); if (!msgDoc.exists()) return;
+              const data = msgDoc.data(); const reactions = data.reactions || {}; const usersForEmoji = reactions[emoji] || [];
+              const hasReacted = usersForEmoji.includes(user.uid);
+              if (hasReacted) {
+                  const newUsers = usersForEmoji.filter(u => u !== user.uid);
+                  if (newUsers.length === 0) delete reactions[emoji]; else reactions[emoji] = newUsers;
+              } else {
+                  let myReactionCount = 0; for (const key in reactions) { if (reactions[key].includes(user.uid)) myReactionCount++; }
+                  if (myReactionCount >= 3) throw "MAX_LIMIT";
+                  if (!reactions[emoji]) reactions[emoji] = []; reactions[emoji].push(user.uid);
+              }
+              transaction.update(msgRef, { reactions });
+          });
+      } catch (e) { if (e === "MAX_LIMIT") alert("You can only add up to 3 reactions per message."); }
+  }
+
+  // 7. Auth & Send & Edit Actions
+  ui.authBtn.addEventListener('click', async () => {
+      const u = ui.authUsn.value.trim(); const p = ui.authPass.value;
+      if (!u || !p) return showAuthError("Enter username and password");
+      if (p.length < 6) return showAuthError("Password too short");
+      const email = u + EMAIL_DOMAIN; ui.authBtn.disabled = true; ui.authBtn.textContent = "PROCESSING...";
+      try {
+          if (isLoginMode) await signInWithEmailAndPassword(auth, email, p);
+          else {
+              const userCred = await createUserWithEmailAndPassword(auth, email, p);
+              await setDoc(doc(db, "users", userCred.user.uid), { alias: "", changesLeft: 2, createdAt: serverTimestamp() });
+          }
+          ui.authUsn.value = ""; ui.authPass.value = ""; 
+      } catch (e) { showAuthError("Incorrect username or password!"); } 
+      finally { ui.authBtn.disabled = false; ui.authBtn.textContent = isLoginMode ? "LOGIN" : "REGISTER"; }
+  });
+
+  ui.sendBtn.addEventListener('click', async () => {
+      const user = auth.currentUser; if (!user) return;
+      const message = ui.msgInput.value.trim();
+      if (!message) { alert("Please type a message."); return; }
+      
+      ui.sendBtn.disabled = true; 
+      const btnText = isEditingMode ? "UPDATE MESSAGE" : "POST MESSAGE";
+      ui.sendBtn.textContent = "PROCESSING...";
+
+      try {
+          if (isEditingMode) {
+              // UPDATE EXISTING
+              const msgRef = doc(db, editingCollection, editingMessageId);
+              await updateDoc(msgRef, { message: message, isEdited: true });
+              alert("Message updated!");
+              loadUserHistory(); // Refresh history list
+          } else {
+              // CREATE NEW
+              const collName = getCurrentCollection();
+              await addDoc(collection(db, collName), {
+                  username: user.email.replace(EMAIL_DOMAIN, ''),
+                  alias: currentUserData.alias || "Anonymous",
+                  message: message,
+                  uid: user.uid,
+                  timestamp: serverTimestamp(),
+                  reactions: {} 
+              });
+          }
+          ui.msgInput.value = ""; ui.sendBtn.textContent = btnText; ui.sendBtn.disabled = false;
+          views.compose.classList.remove('active'); 
+      } catch (e) { 
+          alert("Failed to send/update."); ui.sendBtn.disabled = false; ui.sendBtn.textContent = btnText; console.error(e);
+      }
+  });
+
+  ui.authToggle.addEventListener('click', () => { isLoginMode = !isLoginMode; ui.authTitle.textContent = isLoginMode ? "Welcome, Petals!" : "Create Account"; ui.authBtn.textContent = isLoginMode ? "LOGIN" : "REGISTER"; ui.authToggle.textContent = isLoginMode ? "New here? Create an account" : "Already have an account? Login"; ui.authError.style.display = 'none'; });
+  ui.btnLogout.addEventListener('click', () => signOut(auth));
+  function showAuthError(msg) { ui.authError.textContent = msg; ui.authError.style.display = 'block'; }
+  function escapeHtml(text) { if (!text) return text; return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+</script>
+</body>
+</html>
